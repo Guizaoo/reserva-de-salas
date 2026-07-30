@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 type ReservationFormProps = {
   reservation?: {
@@ -63,7 +63,7 @@ export default function ReservationForm({
   const [fieldErrors, setFieldErrors] =
     useState<ReservationFormFields>({});
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const startsAtDate = new Date(startsAt);

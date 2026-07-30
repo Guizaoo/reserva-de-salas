@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 type RoomFormProps = {
   room?: {
@@ -44,7 +44,7 @@ export default function RoomForm({
     NonNullable<RoomResponse["fields"]>
   >({});
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     // Impede o comportamento padrão, que recarregaria a página inteira.
     event.preventDefault();
 
