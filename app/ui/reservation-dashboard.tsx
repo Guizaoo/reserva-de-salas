@@ -207,20 +207,10 @@ export default function ReservationDashboard() {
   return (
     <main className="min-h-screen bg-[#f6f7f9] text-zinc-950">
       <header className="border-b border-zinc-200/80 bg-white">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-orange-500 text-sm font-black text-white shadow-sm shadow-orange-200">
-              RS
-            </div>
-            <div>
-              <p className="font-semibold tracking-tight">Reserva de Salas</p>
-              <p className="text-xs text-zinc-500">Gestão de espaços</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
-            <span className="size-2 rounded-full bg-emerald-500" />
-            Sistema disponível
+        <div className="mx-auto w-full max-w-7xl px-5 py-4 sm:px-8">
+          <div>
+            <p className="font-semibold tracking-tight">Reserva de Salas</p>
+            <p className="text-xs text-zinc-500">Gestão de espaços</p>
           </div>
         </div>
       </header>
