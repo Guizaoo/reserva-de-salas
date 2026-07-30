@@ -1,23 +1,6 @@
 import { createRoom, listRooms } from "@/lib/data/rooms";
+import { hasPostgresErrorCode } from "@/lib/db/errors";
 import { createRoomSchema } from "@/lib/validations/room";
-
-function hasPostgresErrorCode(error: unknown, code: string) {
-  let currentError = error;
-
-  while (typeof currentError === "object" && currentError !== null) {
-    if ("code" in currentError && currentError.code === code) {
-      return true;
-    }
-
-    if (!("cause" in currentError)) {
-      return false;
-    }
-
-    currentError = currentError.cause;
-  }
-
-  return false;
-}
 
 export async function GET() {
   try {

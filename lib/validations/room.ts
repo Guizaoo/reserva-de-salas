@@ -12,4 +12,16 @@ export const createRoomSchema = z.object({ //Estamos declarando que os dados par
     .positive("A capacidade deve ser maior que zero."),
 });
 
+export const updateRoomSchema = createRoomSchema.partial().refine(
+  (data) => data.name !== undefined || data.capacity !== undefined,
+  {
+    message: "Informe ao menos um campo para atualizar.",
+  },
+);
+
+export const roomIdSchema = z
+  .string()
+  .uuid("O identificador da sala é inválido.");
+
 export type CreateRoomInput = z.infer<typeof createRoomSchema>;
+export type UpdateRoomInput = z.infer<typeof updateRoomSchema>;
