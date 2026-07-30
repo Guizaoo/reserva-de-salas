@@ -335,13 +335,3 @@ permitir que o usuário confirme apenas as ocorrências livres. Manter as
 ocorrências materializadas preservaria a constraint atual de sobreposição,
 facilitaria consultas por intervalo e permitiria tratar horário de verão com
 um fuso explícito na regra.
-
-## Possíveis evoluções
-
-- autenticação e autorização por usuário;
-- horários de funcionamento configuráveis;
-- calendário ou timeline;
-- paginação e busca;
-- testes automatizados de unidade, integração e interface;
-- auditoria de alterações;
-- lembretes e notificações.
