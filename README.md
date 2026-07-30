@@ -3,12 +3,10 @@
 Aplicação full-stack para cadastrar salas e gerenciar reservas de horários,
 com validações de capacidade e conflito executadas no servidor.
 
-## Demonstração
-
-- Repositório: [github.com/Guizaoo/reserva-de-salas](https://github.com/Guizaoo/reserva-de-salas)
-- Frontend: [reserva-de-salas-eta.vercel.app](https://reserva-de-salas-eta.vercel.app/)
-- Backend - salas: [reserva-de-salas-eta.vercel.app/api/rooms](https://reserva-de-salas-eta.vercel.app/api/rooms)
-- Backend - reservas: [reserva-de-salas-eta.vercel.app/api/reservations](https://reserva-de-salas-eta.vercel.app/api/reservations)
+## 
+- Aplicação: [reserva-de-salas-eta.vercel.app](https://reserva-de-salas-eta.vercel.app/)
+- Api - salas: [reserva-de-salas-eta.vercel.app/api/rooms](https://reserva-de-salas-eta.vercel.app/api/rooms)
+- Api - reservas: [reserva-de-salas-eta.vercel.app/api/reservations](https://reserva-de-salas-eta.vercel.app/api/reservations)
 
 O frontend e a API são publicados juntos na Vercel. O banco PostgreSQL está
 hospedado no Supabase.
