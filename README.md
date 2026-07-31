@@ -5,7 +5,6 @@ com validações de capacidade e conflito executadas no servidor.
 
 ## Demonstração
 
-- Repositório: [github.com/Guizaoo/reserva-de-salas](https://github.com/Guizaoo/reserva-de-salas)
 - Frontend: [reserva-de-salas-eta.vercel.app](https://reserva-de-salas-eta.vercel.app/)
 - Salas: [reserva-de-salas-eta.vercel.app/rooms](https://reserva-de-salas-eta.vercel.app/rooms)
 - Reservas: [reserva-de-salas-eta.vercel.app/reservations](https://reserva-de-salas-eta.vercel.app/reservations)
