@@ -3,10 +3,15 @@
 Aplicação full-stack para cadastrar salas e gerenciar reservas de horários,
 com validações de capacidade e conflito executadas no servidor.
 
-## 
-- Aplicação: [reserva-de-salas-eta.vercel.app](https://reserva-de-salas-eta.vercel.app/)
-- Api - salas: [reserva-de-salas-eta.vercel.app/api/rooms](https://reserva-de-salas-eta.vercel.app/api/rooms)
-- Api - reservas: [reserva-de-salas-eta.vercel.app/api/reservations](https://reserva-de-salas-eta.vercel.app/api/reservations)
+## Demonstração
+
+- Repositório: [github.com/Guizaoo/reserva-de-salas](https://github.com/Guizaoo/reserva-de-salas)
+- Frontend: [reserva-de-salas-eta.vercel.app](https://reserva-de-salas-eta.vercel.app/)
+- Salas: [reserva-de-salas-eta.vercel.app/rooms](https://reserva-de-salas-eta.vercel.app/rooms)
+- Reservas: [reserva-de-salas-eta.vercel.app/reservations](https://reserva-de-salas-eta.vercel.app/reservations)
+- API - salas: [reserva-de-salas-eta.vercel.app/api/rooms](https://reserva-de-salas-eta.vercel.app/api/rooms)
+- API - reservas: [reserva-de-salas-eta.vercel.app/api/reservations](https://reserva-de-salas-eta.vercel.app/api/reservations)
+- Swagger: [reserva-de-salas-eta.vercel.app/docs](https://reserva-de-salas-eta.vercel.app/docs)
 
 O frontend e a API são publicados juntos na Vercel. O banco PostgreSQL está
 hospedado no Supabase.
@@ -63,9 +68,14 @@ executadas na API, mesmo que a requisição não tenha vindo da interface.
 ```text
 app/
   api/
+    openapi/
     rooms/
     reservations/
+  docs/
+  rooms/
+  reservations/
   ui/
+    app-header.tsx
     reservation-dashboard.tsx
     reservation-form.tsx
     reservation-delete-dialog.tsx
@@ -87,6 +97,13 @@ drizzle/
   0000_dear_marvex.sql
   0001_prevent-overlapping-reservations.sql
 ```
+
+As páginas visuais são separadas por responsabilidade:
+
+- `/`: visão geral e indicadores;
+- `/rooms`: CRUD de salas;
+- `/reservations`: CRUD de reservas;
+- `/docs`: documentação Swagger da API.
 
 ## Banco de dados
 
@@ -316,8 +333,8 @@ Durante o desenvolvimento, foram verificados manualmente:
 
 ## Reservas recorrentes
 
-Para suportar uma regra como “toda terça-feira às 14h pelos próximos três
-meses”, eu separaria a definição da recorrência das ocorrências:
+Para suportar uma regra como "toda terça-feira às 14h pelos próximos três
+meses", eu separaria a definição da recorrência das ocorrências:
 
 - uma tabela `recurrence_rules` guardaria frequência, intervalo, dias da
   semana, data final e fuso horário;

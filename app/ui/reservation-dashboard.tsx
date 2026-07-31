@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import ReservationDeleteDialog from "@/app/ui/reservation-delete-dialog";
@@ -35,6 +36,36 @@ type ApiListResponse<T> = {
   error?: string;
 };
 
+type DashboardView = "overview" | "rooms" | "reservations";
+
+type ReservationDashboardProps = {
+  view: DashboardView;
+};
+
+const pageDetails: Record<
+  DashboardView,
+  { eyebrow: string; title: string; description: string }
+> = {
+  overview: {
+    eyebrow: "",
+    title: "Agenda de reservas",
+    description:
+      "Consulte os principais números e acesse o gerenciamento do sistema.",
+  },
+  rooms: {
+    eyebrow: "",
+    title: "Salas",
+    description:
+      "Cadastre os espaços e mantenha suas capacidades atualizadas.",
+  },
+  reservations: {
+    eyebrow: "",
+    title: "Reservas",
+    description:
+      "Organize os horários, participantes e salas de cada reserva.",
+  },
+};
+
 const statusDetails: Record<
   ReservationStatus,
   { label: string; className: string }
@@ -66,26 +97,35 @@ const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
 
 // Esta função apenas conversa com a API e devolve dados.
 // Ela não altera estados do React.
-async function fetchDashboardData(selectedRoomId: string) {
+async function fetchDashboardData(
+  selectedRoomId: string,
+  view: DashboardView,
+) {
   const reservationUrl = selectedRoomId
     ? `/api/reservations?roomId=${encodeURIComponent(selectedRoomId)}`
     : "/api/reservations";
 
-  const [roomsResponse, reservationsResponse] = await Promise.all([
-    fetch("/api/rooms"),
-    fetch(reservationUrl),
-  ]);
+  const roomsResponse = await fetch("/api/rooms");
 
   const roomsPayload =
     (await roomsResponse.json()) as ApiListResponse<Room>;
-  const reservationsPayload =
-    (await reservationsResponse.json()) as ApiListResponse<Reservation>;
 
   if (!roomsResponse.ok) {
     throw new Error(
       roomsPayload.error ?? "Não foi possível buscar as salas.",
     );
   }
+
+  if (view === "rooms") {
+    return {
+      rooms: roomsPayload.data ?? [],
+      reservations: [],
+    };
+  }
+
+  const reservationsResponse = await fetch(reservationUrl);
+  const reservationsPayload =
+    (await reservationsResponse.json()) as ApiListResponse<Reservation>;
 
   if (!reservationsResponse.ok) {
     throw new Error(
@@ -99,7 +139,11 @@ async function fetchDashboardData(selectedRoomId: string) {
   };
 }
 
-export default function ReservationDashboard() {
+export default function ReservationDashboard({
+  view,
+}: ReservationDashboardProps) {
+  const currentPage = pageDetails[view];
+
   // Estados que guardam os dados e a situação atual da interface.
   const [rooms, setRooms] = useState<Room[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -160,7 +204,7 @@ export default function ReservationDashboard() {
   useEffect(() => {
     let ignoreResult = false;
 
-    fetchDashboardData(selectedRoomId)
+    fetchDashboardData(selectedRoomId, view)
       .then((dashboardData) => {
         if (ignoreResult) {
           return;
@@ -191,7 +235,7 @@ export default function ReservationDashboard() {
     return () => {
       ignoreResult = true;
     };
-  }, [selectedRoomId, refreshRequest]);
+  }, [selectedRoomId, refreshRequest, view]);
 
   // Calcula os totais exibidos nos cartões sem criar novos estados.
   const reservationSummary = useMemo(() => {
@@ -206,26 +250,17 @@ export default function ReservationDashboard() {
 
   return (
     <main className="min-h-screen bg-[#f6f7f9] text-zinc-950">
-      <header className="border-b border-zinc-200/80 bg-white">
-        <div className="mx-auto w-full max-w-7xl px-5 py-4 sm:px-8">
-          <div>
-            <p className="font-semibold tracking-tight">Reserva de Salas</p>
-            <p className="text-xs text-zinc-500">Gestão de espaços</p>
-          </div>
-        </div>
-      </header>
-
       <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 lg:py-12">
         <section className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
-              Visão geral
+              {currentPage.eyebrow}
             </p>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Agenda de reservas
+              {currentPage.title}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 sm:text-base">
-              Consulte a ocupação das salas e acompanhe os próximos horários.
+              {currentPage.description}
             </p>
           </div>
 
@@ -238,157 +273,202 @@ export default function ReservationDashboard() {
             >
               {isLoading ? "Atualizando..." : "Atualizar dados"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingRoom(null);
-                setIsRoomFormOpen(true);
-              }}
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
-            >
-              + Nova sala
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingReservation(null);
-                setIsReservationFormOpen(true);
-              }}
-              disabled={rooms.length === 0}
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 px-4 text-sm font-semibold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              + Nova reserva
-            </button>
-          </div>
-        </section>
-
-        <section
-          aria-label="Resumo das reservas"
-          className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          <SummaryCard
-            label="Salas cadastradas"
-            value={rooms.length}
-            detail="espaços disponíveis"
-          />
-          <SummaryCard
-            label="Próximas"
-            value={reservationSummary.upcoming}
-            detail="reservas agendadas"
-          />
-          <SummaryCard
-            label="Em andamento"
-            value={reservationSummary.ongoing}
-            detail="acontecendo agora"
-          />
-          <SummaryCard
-            label="Encerradas"
-            value={reservationSummary.finished}
-            detail="no filtro atual"
-          />
-        </section>
-
-        <section className="mb-8">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold tracking-tight">Salas</h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              Espaços disponíveis para receber reservas.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {rooms.map((room) => (
-              <article
-                key={room.id}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+            {view === "rooms" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingRoom(null);
+                  setIsRoomFormOpen(true);
+                }}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 px-4 text-sm font-semibold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600"
               >
-                <div>
-                  <h3 className="font-semibold text-zinc-900">{room.name}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Até {room.capacity} participantes
-                  </p>
-                </div>
+                + Nova sala
+              </button>
+            ) : null}
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingRoom(room);
-                      setIsRoomFormOpen(true);
-                    }}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRoomToDelete(room)}
-                    className="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </article>
-            ))}
+            {view === "reservations" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingReservation(null);
+                  setIsReservationFormOpen(true);
+                }}
+                disabled={rooms.length === 0}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 px-4 text-sm font-semibold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                + Nova reserva
+              </button>
+            ) : null}
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-zinc-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div>
+        {view === "overview" ? (
+          <>
+            <section
+              aria-label="Resumo das reservas"
+              className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
+              <SummaryCard
+                label="Salas cadastradas"
+                value={rooms.length}
+                detail="espaços disponíveis"
+              />
+              <SummaryCard
+                label="Próximas"
+                value={reservationSummary.upcoming}
+                detail="reservas agendadas"
+              />
+              <SummaryCard
+                label="Em andamento"
+                value={reservationSummary.ongoing}
+                detail="acontecendo agora"
+              />
+              <SummaryCard
+                label="Encerradas"
+                value={reservationSummary.finished}
+                detail="reservas concluídas"
+              />
+            </section>
+
+            <section
+              aria-label="Áreas de gerenciamento"
+              className="grid gap-4 lg:grid-cols-2"
+            >
+              <ManagementLink
+                href="/rooms"
+                eyebrow="Espaços"
+                title="Gerenciar salas"
+                description="Cadastre, edite ou exclua salas e defina a capacidade de cada espaço."
+                action="Acessar salas"
+              />
+              <ManagementLink
+                href="/reservations"
+                eyebrow="Agenda"
+                title="Gerenciar reservas"
+                description="Consulte horários, aplique o filtro por sala e administre as reservas."
+                action="Acessar reservas"
+              />
+            </section>
+          </>
+        ) : null}
+
+        {view === "rooms" ? (
+          <section>
+            <div className="mb-4">
               <h2 className="text-lg font-semibold tracking-tight">
-                Reservas
+                Salas cadastradas
               </h2>
               <p className="mt-1 text-sm text-zinc-500">
-                Ordenadas pelo horário de início.
+                Espaços disponíveis para receber reservas.
               </p>
             </div>
 
-            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Filtrar por sala
-              <select
-                value={selectedRoomId}
-                onChange={(event) => {
-                  setIsLoading(true);
-                  setError(null);
-                  setSelectedRoomId(event.target.value);
-                }}
-                className="h-11 min-w-60 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium normal-case tracking-normal text-zinc-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
-              >
-                <option value="">Todas as salas</option>
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div aria-live="polite">
             {isLoading ? (
-              <LoadingState />
+              <RoomLoadingState />
             ) : error ? (
               <ErrorState message={error} onRetry={refreshDashboard} />
-            ) : reservations.length === 0 ? (
-              <EmptyState />
+            ) : rooms.length === 0 ? (
+              <RoomEmptyState />
             ) : (
-              <ul className="divide-y divide-zinc-100">
-                {reservations.map((reservation) => (
-                  <ReservationItem
-                    key={reservation.id}
-                    reservation={reservation}
-                    onEdit={() => {
-                      setEditingReservation(reservation);
-                      setIsReservationFormOpen(true);
-                    }}
-                    onDelete={() => setReservationToDelete(reservation)}
-                  />
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {rooms.map((room) => (
+                  <article
+                    key={room.id}
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+                  >
+                    <div>
+                      <h3 className="font-semibold text-zinc-900">
+                        {room.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-zinc-500">
+                        Até {room.capacity} participantes
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingRoom(room);
+                          setIsRoomFormOpen(true);
+                        }}
+                        className="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRoomToDelete(room)}
+                        className="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </article>
                 ))}
-              </ul>
+              </div>
             )}
-          </div>
-        </section>
+          </section>
+        ) : null}
+
+        {view === "reservations" ? (
+          <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-zinc-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">
+                  Reservas
+                </h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Ordenadas pelo horário de início.
+                </p>
+              </div>
+
+              <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Filtrar por sala
+                <select
+                  value={selectedRoomId}
+                  onChange={(event) => {
+                    setIsLoading(true);
+                    setError(null);
+                    setSelectedRoomId(event.target.value);
+                  }}
+                  className="h-11 min-w-60 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium normal-case tracking-normal text-zinc-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                >
+                  <option value="">Todas as salas</option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div aria-live="polite">
+              {isLoading ? (
+                <LoadingState />
+              ) : error ? (
+                <ErrorState message={error} onRetry={refreshDashboard} />
+              ) : reservations.length === 0 ? (
+                <EmptyState />
+              ) : (
+                <ul className="divide-y divide-zinc-100">
+                  {reservations.map((reservation) => (
+                    <ReservationItem
+                      key={reservation.id}
+                      reservation={reservation}
+                      onEdit={() => {
+                        setEditingReservation(reservation);
+                        setIsReservationFormOpen(true);
+                      }}
+                      onDelete={() => setReservationToDelete(reservation)}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        ) : null}
       </div>
 
       {isRoomFormOpen ? (
@@ -424,6 +504,46 @@ export default function ReservationDashboard() {
         />
       ) : null}
     </main>
+  );
+}
+
+function ManagementLink({
+  href,
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  href: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  action: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
+    >
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-600">
+        {eyebrow}
+      </p>
+      <h2 className="mt-3 text-xl font-semibold tracking-tight text-zinc-900">
+        {title}
+      </h2>
+      <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-500">
+        {description}
+      </p>
+      <span className="mt-5 inline-flex text-sm font-semibold text-orange-700">
+        {action}
+        <span
+          aria-hidden="true"
+          className="ml-2 transition-transform group-hover:translate-x-1"
+        >
+          →
+        </span>
+      </span>
+    </Link>
   );
 }
 
@@ -515,6 +635,19 @@ function LoadingState() {
   );
 }
 
+function RoomLoadingState() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {[1, 2, 3].map((item) => (
+        <div
+          key={item}
+          className="h-24 animate-pulse rounded-2xl bg-zinc-200/70"
+        />
+      ))}
+    </div>
+  );
+}
+
 function ErrorState({
   message,
   onRetry,
@@ -539,13 +672,27 @@ function ErrorState({
   );
 }
 
+function RoomEmptyState() {
+  return (
+    <div className="grid min-h-56 place-items-center rounded-2xl border border-zinc-200 bg-white px-5 py-10 text-center shadow-sm">
+      <div>
+        
+        <p className="font-semibold text-zinc-800">
+          Nenhuma sala cadastrada
+        </p>
+        <p className="mt-2 text-sm text-zinc-500">
+          Use o botão “Nova sala” para cadastrar o primeiro espaço.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="grid min-h-56 place-items-center px-5 py-10 text-center">
       <div>
-        <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-orange-50 text-xl text-orange-600">
-          +
-        </div>
+       
         <p className="font-semibold text-zinc-800">
           Nenhuma reserva encontrada
         </p>

@@ -1,6 +1,5 @@
 import ReservationDashboard from "@/app/ui/reservation-dashboard";
 
-
 export default function Home() {
-  return <ReservationDashboard />;
+  return <ReservationDashboard view="overview" />;
 }
